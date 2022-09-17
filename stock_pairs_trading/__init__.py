@@ -1,0 +1,1 @@
+from stock_pairs_trading.stock_pairs_trading import StockPairsTrading
