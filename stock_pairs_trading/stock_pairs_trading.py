@@ -48,6 +48,16 @@ class StockPairsTrading:
         os.makedirs(self.outputs_dir_path, exist_ok=True)
         os.makedirs(self.data_dir_path, exist_ok=True)
 
+    def _is_exit(self, df: pd.DataFrame, i: int) -> bool:
+        return abs(df.iat[i, Col.ZSCORE]) < 0.5 or (
+            df.iat[i - 1, Col.ZSCORE] > 0.5
+            and df.iat[i, Col.ZSCORE] < -0.5
+            or (
+                df.iat[i - 1, Col.ZSCORE] < -0.5
+                and df.iat[i, Col.ZSCORE] > 0.5
+            )
+        )
+
     def latest_signal(self, pair: tuple) -> dict:
         s1 = pair[0]
         s2 = pair[1]
@@ -88,29 +98,13 @@ class StockPairsTrading:
         ] = df.iat[-1, Col.S2]
         r["zscore"] = df.iat[-1, Col.ZSCORE]
         r["{} Buy".format(s1)] = df.iat[-1, Col.ZSCORE] < -1
-        r["{} Cover".format(s1)] = abs(df.iat[-1, Col.ZSCORE]) < 0.5 or (
-            df.iat[-2, Col.ZSCORE] > 0.5
-            and df.iat[-1, Col.ZSCORE] < -0.5
-            or (df.iat[-2, Col.ZSCORE] < -0.5 and df.iat[-1, Col.ZSCORE] > 0.5)
-        )
+        r["{} Cover".format(s1)] = self._is_exit(df, -1)
         r["{} Sell".format(s1)] = df.iat[-1, Col.ZSCORE] > 1
-        r["{} Short".format(s1)] = abs(df.iat[-1, Col.ZSCORE]) < 0.5 or (
-            df.iat[-2, Col.ZSCORE] > 0.5
-            and df.iat[-1, Col.ZSCORE] < -0.5
-            or (df.iat[-2, Col.ZSCORE] < -0.5 and df.iat[-1, Col.ZSCORE] > 0.5)
-        )
+        r["{} Short".format(s1)] = self._is_exit(df, -1)
         r["{} Buy".format(s2)] = df.iat[-1, Col.ZSCORE] > 1
-        r["{} Cover".format(s2)] = abs(df.iat[-1, Col.ZSCORE]) < 0.5 or (
-            df.iat[-2, Col.ZSCORE] > 0.5
-            and df.iat[-1, Col.ZSCORE] < -0.5
-            or (df.iat[-2, Col.ZSCORE] < -0.5 and df.iat[-1, Col.ZSCORE] > 0.5)
-        )
+        r["{} Cover".format(s2)] = self._is_exit(df, -1)
         r["{} Sell".format(s2)] = df.iat[-1, Col.ZSCORE] < -1
-        r["{} Short".format(s2)] = abs(df.iat[-1, Col.ZSCORE]) < 0.5 or (
-            df.iat[-2, Col.ZSCORE] > 0.5
-            and df.iat[-1, Col.ZSCORE] < -0.5
-            or (df.iat[-2, Col.ZSCORE] < -0.5 and df.iat[-1, Col.ZSCORE] > 0.5)
-        )
+        r["{} Short".format(s2)] = self._is_exit(df, -1)
         return r
 
     def find_pairs(self, tickers: list) -> list:
@@ -201,14 +195,7 @@ class StockPairsTrading:
         s1Performance = s2Performance = 0.0
         flag = 0
         for i in range(len(df)):
-            if abs(df.iat[i, Col.ZSCORE]) < 0.5 or (
-                df.iat[i - 1, Col.ZSCORE] > 0.5
-                and df.iat[i, Col.ZSCORE] < -0.5
-                or (
-                    df.iat[i - 1, Col.ZSCORE] < -0.5
-                    and df.iat[i, Col.ZSCORE] > 0.5
-                )
-            ):
+            if self._is_exit(df, i):
                 if flag == 1:
                     if not np.isnan(s1Profit[0]):
                         df.iat[i, Col.S1SELL] = df.iat[i, Col.S1]

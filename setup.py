@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="stock-pairs-trading",
-    version="0.1.0",
+    version="0.1.1",
     description="stock-pairs-trading is a python library \
         for backtest with stock pairs trading using kalman filter on Python 3.8 and above.",
     long_description=open("README.md").read(),

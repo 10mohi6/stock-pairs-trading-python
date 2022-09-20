@@ -84,6 +84,7 @@ pprint(r)
 ```
 ## Advanced Usage
 ```python
+from pprint import pprint
 from stock_pairs_trading import StockPairsTrading
 
 spt = StockPairsTrading(
